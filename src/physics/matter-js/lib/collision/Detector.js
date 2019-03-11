@@ -1,8 +1,8 @@
 /**
-* The `Matter.Detector` module contains methods for detecting collisions given a set of pairs.
-*
-* @class Detector
-*/
+ * The `Matter.Detector` module contains methods for detecting collisions given a set of pairs.
+ *
+ * @class Detector
+ */
 
 // TODO: speculative contacts
 
@@ -15,7 +15,6 @@ var Pair = require('./Pair');
 var Bounds = require('../geometry/Bounds');
 
 (function() {
-
     /**
      * Finds all collisions given a list of pairs.
      * @method collisions
@@ -30,16 +29,15 @@ var Bounds = require('../geometry/Bounds');
         // @if DEBUG
         var metrics = engine.metrics;
         // @endif
-        
+
         for (var i = 0; i < broadphasePairs.length; i++) {
-            var bodyA = broadphasePairs[i][0], 
+            var bodyA = broadphasePairs[i][0],
                 bodyB = broadphasePairs[i][1];
 
             if ((bodyA.isStatic || bodyA.isSleeping) && (bodyB.isStatic || bodyB.isSleeping))
                 continue;
-            
-            if (!Detector.canCollide(bodyA.collisionFilter, bodyB.collisionFilter))
-                continue;
+
+            if (!Detector.canCollide(bodyA.collisionFilter, bodyB.collisionFilter)) continue;
 
             // @if DEBUG
             metrics.midphaseTests += 1;
@@ -53,7 +51,14 @@ var Bounds = require('../geometry/Bounds');
                     for (var k = bodyB.parts.length > 1 ? 1 : 0; k < bodyB.parts.length; k++) {
                         var partB = bodyB.parts[k];
 
-                        if ((partA === bodyA && partB === bodyB) || Bounds.overlaps(partA.bounds, partB.bounds)) {
+                        // part collision need text collisionFilter first
+                        if (!Detector.canCollide(partA.collisionFilter, partB.collisionFilter))
+                            continue;
+
+                        if (
+                            (partA === bodyA && partB === bodyB) ||
+                            Bounds.overlaps(partA.bounds, partB.bounds)
+                        ) {
                             // find a previous collision we could reuse
                             var pairId = Pair.id(partA, partB),
                                 pair = pairsTable[pairId],
@@ -70,8 +75,7 @@ var Bounds = require('../geometry/Bounds');
 
                             // @if DEBUG
                             metrics.narrowphaseTests += 1;
-                            if (collision.reused)
-                                metrics.narrowReuseCount += 1;
+                            if (collision.reused) metrics.narrowReuseCount += 1;
                             // @endif
 
                             if (collision.collided) {
@@ -98,10 +102,8 @@ var Bounds = require('../geometry/Bounds');
      * @return {bool} `true` if collision can occur
      */
     Detector.canCollide = function(filterA, filterB) {
-        if (filterA.group === filterB.group && filterA.group !== 0)
-            return filterA.group > 0;
+        if (filterA.group === filterB.group && filterA.group !== 0) return filterA.group > 0;
 
         return (filterA.mask & filterB.category) !== 0 && (filterB.mask & filterA.category) !== 0;
     };
-
 })();
